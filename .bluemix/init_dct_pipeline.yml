@@ -55,7 +55,8 @@ stages:
       source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/setup_dind.sh")
 
       # configure the container registry
-      export REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
+      echo "REGISTRY REGION $REGISTRY_REGION"
+      #export REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
       ibmcloud cr region-set $REGISTRY_REGION
       # login docker to ibm container registry
       ibmcloud cr login
