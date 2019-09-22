@@ -20,7 +20,6 @@ properties:
   value: ${VAULT_INSTANCE}
   type: text
 - name: IMAGE_TAG
-  value: ${IMAGE_TAG}
   type: text
 stages:
 - name: Init Docker Content Trust
@@ -94,6 +93,7 @@ stages:
       JSON_ROOT_DATA=$(addTrustFileToJSON "target" "$JSON_ROOT_DATA" "$DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE")
       deleteSecret "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA"
       saveData "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA" "$JSON_ROOT_DATA"
+      export IMAGE_TAG="hello1234"
   - name: Add Build signer
     type: builder
     curatedDockerImage: default
@@ -103,7 +103,7 @@ stages:
     script: |
       #!/bin/bash
       echo "Create signer $DEVOPS_SIGNER for $REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
-
+      echo "IMAGE TAG $IMAGE_TAG"
       export IBMCLOUD_API_KEY=$IBM_CLOUD_API_KEY
       export DOCKER_CONTENT_TRUST=1
       DEVOPS_SIGNER=${BUILD_SIGNER}
