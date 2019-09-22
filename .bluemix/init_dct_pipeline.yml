@@ -84,29 +84,37 @@ stages:
       echo "RUNNING CHECK ***************"
       TEST_RESULT=$(findTrustData "$GUN")
       echo "TEST_RESULT $TEST_RESULT"
-      # Initialize the repository for Docker Content Trust
-      # Generate passphrase for root and repository keys
-      # see https://docs.docker.com/engine/security/trust/trust_key_mng/#choose-a-passphrase
-      if [ -z "$DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE" ]; then
-        export DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE=$(openssl rand -base64 16)
-      fi
-      if [ -z "$DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE" ]; then
-        export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=$(openssl rand -base64 16)
-      fi
-      echo "Doing Docker Content Trust initialization for GUN $REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
-      source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/notary_init_gun.sh")
+      if [ $(findTrustData "$GUN") == "false" ]; then
+        # Initialize the repository for Docker Content Trust
+        # Generate passphrase for root and repository keys
+        # see https://docs.docker.com/engine/security/trust/trust_key_mng/#choose-a-passphrase
+        if [ -z "$DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE" ]; then
+          export DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE=$(openssl rand -base64 16)
+        fi
+        if [ -z "$DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE" ]; then
+          export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=$(openssl rand -base64 16)
+        fi
+        echo "Doing Docker Content Trust initialization for GUN $REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
+        source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/notary_init_gun.sh")
 
-      
-      echo "Backing-up keys in $VAULT_INSTANCE"
-      # jsonify the Vault access values
-      source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/signatures.sh")
-      VAULT_DATA=$(buildVaultAccessDetailsJSON "$VAULT_INSTANCE" "$IBMCLOUD_TARGET_REGION" "$IBMCLOUD_TARGET_RESOURCE_GROUP")
-      JSON_DATA="$(readData "$REGISTRY_NAMESPACE.$IMAGE_NAME.keys" "$VAULT_DATA")"
-      #save the root, repo pem key files to the Vault
-      JSON_ROOT_DATA=$(addTrustFileToJSON "root" "$JSON_ROOT_DATA" "$DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE")
-      JSON_ROOT_DATA=$(addTrustFileToJSON "target" "$JSON_ROOT_DATA" "$DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE")
-      deleteSecret "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA"
-      saveData "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA" "$JSON_ROOT_DATA"
+        
+        echo "Backing-up keys in $VAULT_INSTANCE"
+        # jsonify the Vault access values
+        source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/signatures.sh")
+        VAULT_DATA=$(buildVaultAccessDetailsJSON "$VAULT_INSTANCE" "$IBMCLOUD_TARGET_REGION" "$IBMCLOUD_TARGET_RESOURCE_GROUP")
+        JSON_DATA="$(readData "$REGISTRY_NAMESPACE.$IMAGE_NAME.keys" "$VAULT_DATA")"
+        #save the root, repo pem key files to the Vault
+        JSON_ROOT_DATA=$(addTrustFileToJSON "root" "$JSON_ROOT_DATA" "$DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE")
+        JSON_ROOT_DATA=$(addTrustFileToJSON "target" "$JSON_ROOT_DATA" "$DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE")
+        deleteSecret "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA"
+        saveData "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA" "$JSON_ROOT_DATA"
+      else
+       #
+       echo "No op"
+
+      fi
+
+
       echo "Create signer $DEVOPS_SIGNER for $REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
       echo "IMAGE TAG $IMAGE_TAG"
       echo "Building signer list"
