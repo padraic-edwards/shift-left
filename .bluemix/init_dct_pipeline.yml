@@ -79,6 +79,11 @@ stages:
         ibmcloud cr namespace-add $REGISTRY_NAMESPACE
       fi
 
+      export GUN="$REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
+      source <(curl -s -S -L "https://raw.githubusercontent.com/huayuenh/jumpstart/test/check_signers.sh")
+      echo "RUNNING CHECK ***************"
+      TEST_RESULT=$(findTrustData "$GUN")
+      echo "TEST_RESULT $TEST_RESULT"
       # Initialize the repository for Docker Content Trust
       # Generate passphrase for root and repository keys
       # see https://docs.docker.com/engine/security/trust/trust_key_mng/#choose-a-passphrase
