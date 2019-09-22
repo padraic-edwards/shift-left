@@ -19,8 +19,6 @@ properties:
 - name: VAULT_INSTANCE
   value: ${VAULT_INSTANCE}
   type: text
-- name: IMAGE_TAG
-  type: text
 stages:
 - name: Init Docker Content Trust
   properties:
@@ -32,6 +30,8 @@ stages:
     type: text
   - name: IMAGE_NAME
     value: ${APP_NAME}
+    type: text
+  - name: IMAGE_TAG
     type: text
   jobs:
   - name: Create DCT Keys
