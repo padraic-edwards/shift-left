@@ -81,6 +81,7 @@ stages:
 
       export GUN="$REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
       source <(curl -s -S -L "https://raw.githubusercontent.com/huayuenh/jumpstart/test/check_signers.sh")
+      source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/signatures.sh")
       echo "RUNNING CHECK ***************"
       TEST_RESULT=$(findTrustData "$GUN")
       echo "TEST_RESULT $TEST_RESULT"
@@ -100,7 +101,6 @@ stages:
         
         echo "Backing-up keys in $VAULT_INSTANCE"
         # jsonify the Vault access values
-        source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/signatures.sh")
         VAULT_DATA=$(buildVaultAccessDetailsJSON "$VAULT_INSTANCE" "$IBMCLOUD_TARGET_REGION" "$IBMCLOUD_TARGET_RESOURCE_GROUP")
         JSON_DATA="$(readData "$REGISTRY_NAMESPACE.$IMAGE_NAME.keys" "$VAULT_DATA")"
         #save the root, repo pem key files to the Vault
