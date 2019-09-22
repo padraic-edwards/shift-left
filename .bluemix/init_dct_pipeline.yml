@@ -102,25 +102,13 @@ stages:
       JSON_ROOT_DATA=$(addTrustFileToJSON "target" "$JSON_ROOT_DATA" "$DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE")
       deleteSecret "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA"
       saveData "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA" "$JSON_ROOT_DATA"
-      export IMAGE_TAG="hello1234"
-      unset REGISTRY_REGION
-      export REGISTRY_REGION="some place"
-      echo "REGISTRY REGION $REGISTRY_REGION"
       echo "Create signer $DEVOPS_SIGNER for $REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
       echo "IMAGE TAG $IMAGE_TAG"
-      export IBMCLOUD_API_KEY=$IBM_CLOUD_API_KEY
-      export DOCKER_CONTENT_TRUST=1
+      echo "Building signer list"
       signerList=("$DEVOPS_BUILD_SIGNER" "$DEVOPS_VALIDATION_SIGNER")
-      echo "BUILD SIGNER $BUILD_SIGNER"
-      echo "VALIDATION SIGNER $VALIDATION_SIGNER"
       for i in "${signerList[@]}"; do
         echo "RUNNING ADD SCRIPT FOR $i";
         DEVOPS_SIGNER=$i
-        # configure the container registry
-        export REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
-        ibmcloud cr region-set $REGISTRY_REGION
-        # login docker to ibm container registry
-        ibmcloud cr login
         # Restore root & repository keys
         echo "Restoring keys from $VAULT_INSTANCE"
         source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/add_signer.sh")
