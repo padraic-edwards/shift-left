@@ -106,14 +106,6 @@ stages:
       unset REGISTRY_REGION
       export REGISTRY_REGION="some place"
       echo "REGISTRY REGION $REGISTRY_REGION"
-  - name: Add Signer
-    type: builder
-    curatedDockerImage: default
-    #artifact_dir: back-your-keys
-    build_type: customimage
-    docker_image: jauninb/pbi-docker:latest
-    script: |
-      #!/bin/bash
       echo "Create signer $DEVOPS_SIGNER for $REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
       echo "IMAGE TAG $IMAGE_TAG"
       export IBMCLOUD_API_KEY=$IBM_CLOUD_API_KEY
@@ -123,11 +115,7 @@ stages:
       echo "VALIDATION SIGNER $VALIDATION_SIGNER"
       for i in "${signerList[@]}"; do
         echo "RUNNING ADD SCRIPT FOR $i";
-      
         DEVOPS_SIGNER=$i
-        # Setup Docker-In-Docker
-        source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/setup_dind.sh")
-
         # configure the container registry
         export REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
         ibmcloud cr region-set $REGISTRY_REGION
@@ -135,7 +123,6 @@ stages:
         ibmcloud cr login
         # Restore root & repository keys
         echo "Restoring keys from $VAULT_INSTANCE"
-        source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/signatures.sh")
         source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/add_signer.sh")
       done
 - name: Setup IKS Runtime enforcement in deployment cluster
