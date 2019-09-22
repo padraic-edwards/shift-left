@@ -33,6 +33,12 @@ stages:
     type: text
   - name: IMAGE_TAG
     type: text
+  - name: DEVOPS_BUILD_SIGNER
+    value: ${BUILD_SIGNER}
+    type: text
+  - name: DEVOPS_VALIDATION_SIGNER
+    value: ${VALIDATION_SIGNER}
+    type: text
   jobs:
   - name: Create DCT Keys
     type: builder
@@ -100,7 +106,7 @@ stages:
       unset REGISTRY_REGION
       export REGISTRY_REGION="some place"
       echo "REGISTRY REGION $REGISTRY_REGION"
-  - name: Add Build signer
+  - name: Add Signer
     type: builder
     curatedDockerImage: default
     #artifact_dir: back-your-keys
@@ -112,49 +118,31 @@ stages:
       echo "IMAGE TAG $IMAGE_TAG"
       export IBMCLOUD_API_KEY=$IBM_CLOUD_API_KEY
       export DOCKER_CONTENT_TRUST=1
-      DEVOPS_SIGNER=${BUILD_SIGNER}
-      # Setup Docker-In-Docker
-      source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/setup_dind.sh")
+      signerList=("$DEVOPS_BUILD_SIGNER" "$DEVOPS_VALIDATION_SIGNER")
+      echo "BUILD SIGNER $BUILD_SIGNER"
+      echo "VALIDATION SIGNER $VALIDATION_SIGNER"
+      for i in "${signerList[@]}"; do
+        echo "RUNNING ADD SCRIPT FOR $i";
+      
+        DEVOPS_SIGNER=$i
+        # Setup Docker-In-Docker
+        source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/setup_dind.sh")
 
-      # configure the container registry
-      export REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
-      ibmcloud cr region-set $REGISTRY_REGION
-      # login docker to ibm container registry
-      ibmcloud cr login
-      # Restore root & repository keys
-      echo "Restoring keys from $VAULT_INSTANCE"
-      source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/signatures.sh")
-      source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/add_signer.sh")
-  - name: Add Validation Signer Key
-    type: builder
-    curatedDockerImage: default
-    #artifact_dir: back-your-keys
-    build_type: customimage
-    docker_image: jauninb/pbi-docker:latest
-    script: |
-      #!/bin/bash
-      echo "Create signer $DEVOPS_SIGNER for $REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
-
-      export IBMCLOUD_API_KEY=$IBM_CLOUD_API_KEY
-      export DOCKER_CONTENT_TRUST=1
-      DEVOPS_SIGNER=${VALIDATION_SIGNER}
-      # Setup Docker-In-Docker
-      source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/setup_dind.sh")
-
-      # configure the container registry
-      export REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
-      ibmcloud cr region-set $REGISTRY_REGION
-      # login docker to ibm container registry
-      ibmcloud cr login
-      # Restore root & repository keys
-      echo "Restoring keys from $VAULT_INSTANCE"
-      source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/signatures.sh")
-      source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/add_signer.sh")
+        # configure the container registry
+        export REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
+        ibmcloud cr region-set $REGISTRY_REGION
+        # login docker to ibm container registry
+        ibmcloud cr login
+        # Restore root & repository keys
+        echo "Restoring keys from $VAULT_INSTANCE"
+        source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/signatures.sh")
+        source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/add_signer.sh")
+      done
 - name: Setup IKS Runtime enforcement in deployment cluster
   inputs:
   - type: job
-    stage: Add Validation Delegate
-    job: Add Validation Signer Key
+    stage: Init Docker Content Trust
+    job: Create DCT Keys
   triggers:
   - type: stage
     enabled: false
