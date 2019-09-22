@@ -94,22 +94,6 @@ stages:
       JSON_ROOT_DATA=$(addTrustFileToJSON "target" "$JSON_ROOT_DATA" "$DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE")
       deleteSecret "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA"
       saveData "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA" "$JSON_ROOT_DATA"
-      
-- name: Add Build Delegate
-  inputs:
-  - type: job
-    stage: Init Docker Content Trust
-    job: Create DCT Keys
-  triggers:
-  - type: stage
-  properties:
-  - name: DEVOPS_SIGNER
-    value: ${BUILD_SIGNER}
-    type: text
-  - name: dct_properties
-    value: dct.properties
-    type: file
-  jobs:
   - name: Add Build signer
     type: builder
     curatedDockerImage: default
@@ -122,7 +106,7 @@ stages:
 
       export IBMCLOUD_API_KEY=$IBM_CLOUD_API_KEY
       export DOCKER_CONTENT_TRUST=1
-
+      DEVOPS_SIGNER=${BUILD_SIGNER}
       # Setup Docker-In-Docker
       source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/setup_dind.sh")
 
@@ -135,21 +119,6 @@ stages:
       echo "Restoring keys from $VAULT_INSTANCE"
       source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/signatures.sh")
       source <(curl -sSL "https://raw.githubusercontent.com/huayuenh/jumpstart/test/add_signer.sh")
-- name: Add Validation Delegate
-  inputs:
-  - type: job
-    stage: Add Build Delegate
-    job: Add Build signer
-  triggers:
-  - type: stage
-  properties:
-  - name: DEVOPS_SIGNER
-    value: ${VALIDATION_SIGNER}
-    type: text
-  - name: dct_properties
-    value: dct.properties
-    type: file
-  jobs:
   - name: Add Validation Signer Key
     type: builder
     curatedDockerImage: default
@@ -162,7 +131,7 @@ stages:
 
       export IBMCLOUD_API_KEY=$IBM_CLOUD_API_KEY
       export DOCKER_CONTENT_TRUST=1
-
+      DEVOPS_SIGNER=${VALIDATION_SIGNER}
       # Setup Docker-In-Docker
       source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/setup_dind.sh")
 
