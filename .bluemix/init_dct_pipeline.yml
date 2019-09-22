@@ -56,8 +56,10 @@ stages:
 
       # configure the container registry
       echo "REGISTRY REGION $REGISTRY_REGION"
-      #export REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
+      export REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
       ibmcloud cr region-set $REGISTRY_REGION
+      echo "REGISTRY REGION $REGISTRY_REGION"
+
       # login docker to ibm container registry
       ibmcloud cr login
 
@@ -95,6 +97,9 @@ stages:
       deleteSecret "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA"
       saveData "$REGISTRY_NAMESPACE.$IMAGE_NAME.repokeys" "$VAULT_DATA" "$JSON_ROOT_DATA"
       export IMAGE_TAG="hello1234"
+      unset REGISTRY_REGION
+      export REGISTRY_REGION="some place"
+      echo "REGISTRY REGION $REGISTRY_REGION"
   - name: Add Build signer
     type: builder
     curatedDockerImage: default
