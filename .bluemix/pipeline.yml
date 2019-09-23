@@ -300,7 +300,7 @@ stages:
     value: ${APP_NAME}
     type: text
   - name: IMAGE_TAG
-    value: undefined
+    value: ''
     type: text
   - name: IBM_CLOUD_API_KEY
     value: ${API_KEY}
@@ -381,6 +381,8 @@ stages:
       export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=$(getJSONValue "passphrase" "$signerkey")
       export DCT_DISABLED=false
       source <(curl -s -S -L "https://raw.githubusercontent.com/huayuenh/jumpstart/test/build_image_dind.sh")
+
+      export IMAGE_TAG="${IMAGE_TAG}"
   - name: Sign Image for Builder
     type: tester
     test_type: customimage
@@ -392,6 +394,7 @@ stages:
       # Sign the built image as validated
       
       echo "Place Holder"
+      echo "IMAGE TAG ${IMAGE_TAG}"
       #source <(curl -s -S -L "https://raw.githubusercontent.com/jauninb/jumpstart/master/setup_dind.sh")
       # configure the container registry
       #REGISTRY_REGION=$(echo "$REGISTRY_REGION" | awk -F ':' '{print $NF;}')
