@@ -39,6 +39,8 @@ stages:
   - name: DEVOPS_VALIDATION_SIGNER
     value: ${VALIDATION_SIGNER}
     type: text
+  triggers:
+  - type: commit
   jobs:
   - name: Create DCT Keys
     type: builder
@@ -133,7 +135,7 @@ stages:
     job: Create DCT Keys
   triggers:
   - type: stage
-    enabled: false
+    enabled: true
   properties:
   - name: DEFAULT_HELM_VERSION
     value: 2.13.1
@@ -201,7 +203,8 @@ stages:
     branch: master
     service: ${GIT_REPO}
   triggers:
-  - type: commit
+  - type: stage
+    enabled: true
   properties:
   - name: IMAGE_NAME
     value: ${APP_NAME}
