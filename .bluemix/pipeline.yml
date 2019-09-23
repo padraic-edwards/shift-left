@@ -39,8 +39,7 @@ stages:
   - name: DEVOPS_VALIDATION_SIGNER
     value: ${VALIDATION_SIGNER}
     type: text
-  triggers:
-  - type: commit
+  
   jobs:
   - name: Create DCT Keys
     type: builder
@@ -203,8 +202,7 @@ stages:
     branch: master
     service: ${GIT_REPO}
   triggers:
-  - type: stage
-    enabled: true
+  - type: commit
   properties:
   - name: IMAGE_NAME
     value: ${APP_NAME}
