@@ -202,7 +202,8 @@ stages:
     branch: master
     service: ${GIT_REPO}
   triggers:
-  - type: commit
+  - type: stage
+    enabled: true
   properties:
   - name: IMAGE_NAME
     value: ${APP_NAME}
